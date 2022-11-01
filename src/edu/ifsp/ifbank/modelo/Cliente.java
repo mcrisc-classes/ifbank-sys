@@ -1,17 +1,8 @@
 package edu.ifsp.ifbank.modelo;
 
-public class Cliente {
-	private int id;
+public class Cliente extends Entity {
 	private String nome;
 	private String telefone;
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
 
 	public String getNome() {
 		return nome;

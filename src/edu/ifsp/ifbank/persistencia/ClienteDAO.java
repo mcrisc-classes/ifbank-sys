@@ -63,4 +63,54 @@ public class ClienteDAO {
 		
 		return clientes;
 	}
+	
+	public Cliente save(Cliente cliente) throws PersistenceException {
+		try (Connection conn = DataSource.getConnection()) {
+			if (cliente.isNew()) {
+				insert(conn, cliente);
+			} else {
+				update(conn, cliente);
+			}
+		} catch (SQLException e) {
+			throw new PersistenceException(e);
+		}
+		
+		return cliente;
+	}
+	
+	public void delete(Cliente cliente) throws PersistenceException {
+		try (Connection conn = DataSource.getConnection()) {
+			String query = "DELETE FROM cliente WHERE id = ?;";
+			try (PreparedStatement ps = conn.prepareStatement(query)) {
+				ps.setInt(1, cliente.getId());
+				ps.executeUpdate();
+			}
+		} catch (SQLException e) {
+			throw new PersistenceException(e);
+		}
+	}
+
+	private void insert(Connection conn, Cliente cliente) throws SQLException {
+		String query = "INSERT INTO cliente (nome, telefone) VALUES (?, ?);";
+		try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+			ps.setString(1, cliente.getNome());
+			ps.setString(2, cliente.getTelefone());
+			ps.executeUpdate();
+			
+			ResultSet rs = ps.getGeneratedKeys();
+			if (rs.next()) {
+				cliente.setId(rs.getInt(1));
+			}
+		}
+	}
+
+	private void update(Connection conn, Cliente cliente) throws SQLException {
+		String query = "UPDATE cliente SET nome = ?, telefone = ? WHERE id = ?;";
+		try (PreparedStatement ps = conn.prepareStatement(query)) {
+			ps.setString(1, cliente.getNome());
+			ps.setString(2, cliente.getTelefone());
+			ps.setInt(3, cliente.getId());
+			ps.executeUpdate();
+		}
+	}
 }
