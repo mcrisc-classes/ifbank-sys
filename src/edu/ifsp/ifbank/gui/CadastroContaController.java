@@ -18,9 +18,11 @@ import javax.swing.SwingWorker;
 import edu.ifsp.ifbank.modelo.Cliente;
 import edu.ifsp.ifbank.modelo.Conta;
 import edu.ifsp.ifbank.persistencia.ClienteDAO;
+import edu.ifsp.ifbank.persistencia.ContaDAO;
 
 public class CadastroContaController extends UseCaseController {
 	private ClienteDAO clienteDao = new ClienteDAO();
+	private ContaDAO contaDao = new ContaDAO();
 	private Conta conta = null;
 	
 	private JPanel panel = new JPanel();
@@ -32,6 +34,9 @@ public class CadastroContaController extends UseCaseController {
 	@Override
 	public void init() {
 		conta = new Conta();
+		textTitular.setValue(null);
+		textNumero.setValue(null);
+		textNomeTitular.setText("");
 	}
 	
 	@Override
@@ -129,6 +134,34 @@ public class CadastroContaController extends UseCaseController {
 	}
 	
 	private void salvar() {
+		if (textNumero.getValue() == null) {
+			System.err.println("Número de conta está vazio.");
+			return;
+		}
+		
+		int numero = ((Number)textNumero.getValue()).intValue();
+		conta.setNumero(numero);
+		
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+			@Override
+			protected Void doInBackground() throws Exception {
+				contaDao.save(conta);
+				return null;
+			}
+			
+			@Override
+			protected void done() {
+				try {
+					get();
+					getMainController().setStatus("Conta salva com sucesso!");
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(null, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+					e.printStackTrace();
+				}
+			}
+		};
+		worker.execute();
 		
 	}
+
 }
