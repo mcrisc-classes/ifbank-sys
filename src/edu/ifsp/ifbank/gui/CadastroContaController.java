@@ -10,15 +10,29 @@ import java.text.NumberFormat;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
+
+import edu.ifsp.ifbank.modelo.Cliente;
+import edu.ifsp.ifbank.modelo.Conta;
+import edu.ifsp.ifbank.persistencia.ClienteDAO;
 
 public class CadastroContaController extends UseCaseController {
+	private ClienteDAO clienteDao = new ClienteDAO();
+	private Conta conta = null;
+	
 	private JPanel panel = new JPanel();
 	private JFormattedTextField textTitular;
 	private JTextField textNomeTitular;
 	private JFormattedTextField textNumero;
 	private JButton botaoSalvar;
+
+	@Override
+	public void init() {
+		conta = new Conta();
+	}
 	
 	@Override
 	public JPanel buildUI() {
@@ -81,7 +95,37 @@ public class CadastroContaController extends UseCaseController {
 	}
 	
 	private void buscarTitular() {
+		if (textTitular.getValue() == null) {
+			return;
+		}
 		
+		int id = ((Number)textTitular.getValue()).intValue();
+
+		SwingWorker<Cliente, Void> worker = new SwingWorker<>() {
+
+			@Override
+			protected Cliente doInBackground() throws Exception {
+				Cliente cliente = clienteDao.findById(id);
+				return cliente;
+			}
+			
+			@Override
+			protected void done() {
+				try {
+					Cliente cliente = get();
+					if (cliente != null) {
+						conta.setTitular(cliente);
+						textNomeTitular.setText(cliente.getNome());
+					} else {
+						textNomeTitular.setText("Código inválido!");
+					}
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(null, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+					e.printStackTrace();
+				}
+			}
+		};
+		worker.execute();
 	}
 	
 	private void salvar() {
