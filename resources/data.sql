@@ -27,7 +27,7 @@ INSERT INTO conta (numero, saldo, titular) VALUES (4, 0, 4);
 
 /* Crédito (C) de 5000,00 na conta 1 */
 START TRANSACTION;
-UPDATE conta SET saldo = 5000 WHERE numero = 1;
+UPDATE conta SET saldo = saldo + 5000 WHERE numero = 1;
 INSERT INTO movimentacao (origem, valor, tipo) VALUES (1, 5000, 'C');
 COMMIT;
 
