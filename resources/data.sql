@@ -45,42 +45,96 @@ INSERT INTO movimentacao (origem, valor, tipo) VALUES (1, 300, 'D');
 COMMIT;
 
 
+
 /*
  * Operações com empréstimos
  */
 
-/* Cadastro de empréstimo */
+/* Abertura de empréstimo */
+START TRANSACTION;
+SET @id_emprestimo = 1;
+SET @juros_aa = 8.5;
+SET @valor_total = 2000;
+SET @qtd_parcelas = 5;
+SET @juros_am = @juros_aa / 12;
+SET @saldo_devedor = @valor_total;
+
 INSERT INTO emprestimo
         (id, cliente, valor_total, saldo_devedor, taxa_juros, qtd_parcelas, dt_contrato)
 VALUES
-        (1, 4, 2000, 2000, 8.5, 12, '2022-10-20');
+        (1, 4, @valor_total, @saldo_devedor, @juros_aa, @qtd_parcelas, CURRENT_DATE());
+
+/* Abertura das parcelas, segundo a Tabela SAC (Sistema de Amortização Constante) */
+/* Parcela 1 */
+SET @numero_parcela = 1;
+SET @juros = @saldo_devedor * @juros_am / 100;
+SET @amortizacao = @valor_total / @qtd_parcelas;
+SET @valor_parcela = @amortizacao + @juros;
+SET @dt_vencto = DATE_ADD(CURRENT_DATE(), INTERVAL (30 * @numero_parcela) DAY);
+INSERT INTO parcela (emprestimo, numero, valor_parcela, amortizacao, juros, dt_vencto)
+VALUES (@id_emprestimo, @numero_parcela, @valor_parcela, @amortizacao, @juros, @dt_vencto);
+SET @saldo_devedor = @saldo_devedor - @valor_parcela;
+
+/* Parcela 2 */
+SET @numero_parcela = 2;
+SET @juros = @saldo_devedor * @juros_am / 100;
+SET @amortizacao = @valor_total / @qtd_parcelas;
+SET @valor_parcela = @amortizacao + @juros;
+SET @dt_vencto = DATE_ADD(CURRENT_DATE(), INTERVAL (30 * @numero_parcela) DAY);
+INSERT INTO parcela (emprestimo, numero, valor_parcela, amortizacao, juros, dt_vencto)
+VALUES (@id_emprestimo, @numero_parcela, @valor_parcela, @amortizacao, @juros, @dt_vencto);
+SET @saldo_devedor = @saldo_devedor - @valor_parcela;
+
+/* Parcela 3 */
+SET @numero_parcela = 3;
+SET @juros = @saldo_devedor * @juros_am / 100;
+SET @amortizacao = @valor_total / @qtd_parcelas;
+SET @valor_parcela = @amortizacao + @juros;
+SET @dt_vencto = DATE_ADD(CURRENT_DATE(), INTERVAL (30 * @numero_parcela) DAY);
+INSERT INTO parcela (emprestimo, numero, valor_parcela, amortizacao, juros, dt_vencto)
+VALUES (@id_emprestimo, @numero_parcela, @valor_parcela, @amortizacao, @juros, @dt_vencto);
+SET @saldo_devedor = @saldo_devedor - @valor_parcela;
+
+/* Parcela 4 */
+SET @numero_parcela = 4;
+SET @juros = @saldo_devedor * @juros_am / 100;
+SET @amortizacao = @valor_total / @qtd_parcelas;
+SET @valor_parcela = @amortizacao + @juros;
+SET @dt_vencto = DATE_ADD(CURRENT_DATE(), INTERVAL (30 * @numero_parcela) DAY);
+INSERT INTO parcela (emprestimo, numero, valor_parcela, amortizacao, juros, dt_vencto)
+VALUES (@id_emprestimo, @numero_parcela, @valor_parcela, @amortizacao, @juros, @dt_vencto);
+SET @saldo_devedor = @saldo_devedor - @valor_parcela;
+
+/* Parcela 5 */
+SET @numero_parcela = 5;
+SET @juros = @saldo_devedor * @juros_am / 100;
+SET @amortizacao = @valor_total / @qtd_parcelas;
+SET @valor_parcela = @amortizacao + @juros;
+SET @dt_vencto = DATE_ADD(CURRENT_DATE(), INTERVAL (30 * @numero_parcela) DAY);
+INSERT INTO parcela (emprestimo, numero, valor_parcela, amortizacao, juros, dt_vencto)
+VALUES (@id_emprestimo, @numero_parcela, @valor_parcela, @amortizacao, @juros, @dt_vencto);
+SET @saldo_devedor = @saldo_devedor - @valor_parcela;
+
+COMMIT;
 
 
-/* Pagamento da parcela número 1, com débito em conta */
-/* Tabela SAC (Sistema de Amortização Constante) */
+/* Quitação da parcela número 1, com débito em conta */
 START TRANSACTION;
 
 SET @id_emprestimo = 1;
 SET @num_parcela = 1;
 
-SELECT valor_total, saldo_devedor, taxa_juros, qtd_parcelas
-INTO @valor_total, @saldo_devedor, @juros_aa, @qtd_parcelas
-FROM emprestimo WHERE id = @id_emprestimo;
-
-SET @juros_am = @juros_aa / 12;
-SET @juros = @saldo_devedor * @juros_am / 100;
-SET @amortizacao = @valor_total / @qtd_parcelas;
-SET @valor_parcela = @amortizacao + @juros;
+SELECT id, amortizacao INTO @id_parcela, @amortizacao 
+FROM parcela WHERE emprestimo = @id_emprestimo AND numero = @num_parcela;
 
 /* Pagamento da parcela */
-INSERT INTO parcela (emprestimo, numero, valor_parcela, amortizacao, juros)
-VALUES (@id_emprestimo, @num_parcela, @valor_parcela, @amortizacao, @juros);
+UPDATE parcela SET dt_pgto = CURRENT_DATE() WHERE id = @id_parcela;
 
 UPDATE emprestimo
 SET 
         parcelas_pagas = parcelas_pagas + 1,
         saldo_devedor = saldo_devedor - @amortizacao
-WHERE id = 1;
+WHERE id = @id_emprestimo;
 
 /* Débito na conta do cliente */
 SET @numero_conta = 4; /* conta 4 pertence ao cliente 4, que é tomou este empréstimo */

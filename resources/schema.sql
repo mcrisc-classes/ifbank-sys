@@ -64,13 +64,15 @@ CREATE TABLE parcela (
         id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
         emprestimo INT NOT NULL,
         numero INT NOT NULL,
-        dt_pgto DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         valor_parcela DECIMAL(11,2) DEFAULT 0,
         amortizacao DECIMAL(11,2) NOT NULL,
-        juros DECIMAL(11,2) NOT NULL
+        juros DECIMAL(11,2) NOT NULL,
+        dt_vencto DATE NOT NULL,
+        dt_pgto DATETIME DEFAULT NULL        
 );
 ALTER TABLE parcela ADD CONSTRAINT
 FOREIGN KEY parcela_fk(emprestimo) REFERENCES emprestimo(id);
+CREATE INDEX idx_parcela ON parcela (emprestimo, numero);
 
 
 /* Tabela: endereco */
